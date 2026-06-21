@@ -152,7 +152,7 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative z-10"
+          className="flex-1 flex flex-col h-dvh overflow-hidden relative z-10"
         >
           {/* Cinematic Background Layer */}
           <CinematicBackground />
