@@ -109,8 +109,5 @@ When writing modifications for the ChronoStrider console, adhere to these protoc
 > [!IMPORTANT]
 > **Image Scaling**: Always use Next.js `Image` tags with the height set via `className` (e.g. `h-[84px]`), width set to `w-auto`, and the inline style `style={{ width: "auto" }}` to satisfy the linter and preserve layout ratios.
 
-> [!TIP]
-> **Analytics Setup**: The Google Analytics tag `G-96WFPDMQ15` is registered as an inline `next/script` inside `layout.tsx` running `afterInteractive`. Do not manually bundle duplicate tags in nested pages.
-
 > [!WARNING]
 > **Acoustics Engine**: Web Audio triggers (`sounds.ts`) require initial user interaction before browser authorization. The audio controller has a local storage state sync to cleanly persist muting configurations.
