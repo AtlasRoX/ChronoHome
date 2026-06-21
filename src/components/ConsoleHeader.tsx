@@ -40,7 +40,7 @@ export default function ConsoleHeader() {
   };
 
   return (
-    <header className="w-full border-b border-white/5 px-6 py-4 flex justify-between items-center text-xs font-mono text-text-phosphor select-none relative z-20">
+    <header className="w-full border-b border-white/5 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center text-xs font-mono text-text-phosphor select-none relative z-20">
       {/* Brand logo */}
       <div className="flex items-center">
         <Image
@@ -49,6 +49,7 @@ export default function ConsoleHeader() {
           width={96}
           height={28}
           className="w-24 h-7 object-contain filter drop-shadow-[0_0_10px_rgba(0,240,255,0.4)] transition-transform duration-300 hover:scale-105 cursor-pointer"
+          style={{ width: "auto", height: "auto" }}
           priority
         />
       </div>

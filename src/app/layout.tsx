@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const spaceGrotesk = Space_Grotesk({
@@ -47,6 +48,19 @@ export default function RootLayout({
         <div className="relative z-10 w-full h-full flex flex-col flex-1">
           {children}
         </div>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-96WFPDMQ15"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'G-96WFPDMQ15');
+          `}
+        </Script>
       </body>
     </html>
   );

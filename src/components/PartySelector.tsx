@@ -184,11 +184,11 @@ export default function PartySelector({ activeIndex, onSelect }: PartySelectorPr
         }}
         title="Previous Tab"
       >
-        <ChevronLeft className="w-4 h-4 md:w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-0.5 transition-transform" />
       </button>
 
       {/* Horizontal Nav List */}
-      <div className="flex-1 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:gap-x-10">
+      <div className="flex-1 flex flex-wrap items-center justify-center gap-x-1.5 sm:gap-x-3 md:gap-x-8 gap-y-1">
         {membersData.map((member, idx) => {
           const isActive = idx === activeIndex;
           const displayLabel = `${String(idx + 1).padStart(2, "0")} / ${shortNames[idx]}`;
@@ -196,12 +196,12 @@ export default function PartySelector({ activeIndex, onSelect }: PartySelectorPr
           return (
             <div
               key={idx}
-              className="relative py-2.5 px-2 cursor-pointer transition-all duration-200"
+              className="relative py-2 px-1 sm:px-2 cursor-pointer transition-all duration-200"
               onMouseEnter={handleMouseEnter}
               onClick={() => handleItemSelect(idx)}
             >
               <span
-                className={`font-space-grotesk tracking-[0.25em] text-[10px] md:text-xs font-bold ${
+                className={`font-space-grotesk tracking-[0.15em] sm:tracking-[0.25em] text-[9px] sm:text-[10px] md:text-xs font-bold ${
                   isActive ? "text-white" : "text-text-muted hover:text-white/60"
                 } transition-colors`}
               >
@@ -211,7 +211,7 @@ export default function PartySelector({ activeIndex, onSelect }: PartySelectorPr
               {isActive && (
                 <motion.div
                   layoutId="activeTimelineIndicator"
-                  className="absolute bottom-0 left-2 right-2 h-[2px] shadow-[0_0_8px_rgba(255,255,255,0.25)]"
+                  className="absolute bottom-0 left-1 right-1 h-[2px] shadow-[0_0_8px_rgba(255,255,255,0.25)]"
                   style={{ backgroundColor: getThemeColorHex(member.color) }}
                   transition={{ type: "spring", stiffness: 350, damping: 25 }}
                 />
@@ -239,7 +239,7 @@ export default function PartySelector({ activeIndex, onSelect }: PartySelectorPr
         }}
         title="Next Tab"
       >
-        <ChevronRight className="w-4 h-4 md:w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+        <ChevronRight className="w-4 h-4 md:w-5 md:h-5 group-hover:translate-x-0.5 transition-transform" />
       </button>
     </div>
   );

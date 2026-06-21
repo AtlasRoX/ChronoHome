@@ -1,17 +1,31 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/LoadingScreen";
 import ConsoleHeader from "@/components/ConsoleHeader";
 import PartySelector, { membersData } from "@/components/PartySelector";
 import ActiveDossier from "@/components/ActiveDossier";
+import CinematicBackground from "@/components/CinematicBackground";
 import { playSelect } from "@/utils/sounds";
 
 export default function Home() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // 1 = right/next, -1 = left/prev
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleNext = useCallback(() => {
+    playSelect();
+    setDirection(1);
+    setActiveIndex((prev) => (prev + 1) % membersData.length);
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    playSelect();
+    setDirection(-1);
+    setActiveIndex((prev) => (prev - 1 + membersData.length) % membersData.length);
+  }, []);
 
   // Keyboard navigation for active member
   useEffect(() => {
@@ -20,22 +34,19 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") {
         e.preventDefault();
-        playSelect();
-        setActiveIndex((prev) => (prev + 1) % membersData.length);
+        handleNext();
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
-        playSelect();
-        setActiveIndex((prev) => (prev - 1 + membersData.length) % membersData.length);
+        handlePrev();
       } else if (e.key === " " || e.key === "Spacebar") {
         e.preventDefault();
-        playSelect();
-        setActiveIndex((prev) => (prev + 1) % membersData.length);
+        handleNext();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isLoaded]);
+  }, [isLoaded, handleNext, handlePrev]);
 
   // Wheel / Scroll navigation for active member with smart boundary checking
   useEffect(() => {
@@ -71,79 +82,62 @@ export default function Home() {
       if (now - lastScrollTime < cooldownMs) return;
 
       lastScrollTime = now;
-      playSelect();
       if (e.deltaY > 0) {
         // Scroll down -> Next
-        setActiveIndex((prev) => (prev + 1) % membersData.length);
+        handleNext();
       } else {
         // Scroll up -> Prev
-        setActiveIndex((prev) => (prev - 1 + membersData.length) % membersData.length);
+        handlePrev();
       }
     };
 
     window.addEventListener("wheel", handleWheel, { passive: true });
     return () => window.removeEventListener("wheel", handleWheel);
-  }, [isLoaded]);
+  }, [isLoaded, handleNext, handlePrev]);
 
-  // Touch / Swipe navigation for mobile
+  // Touch / Swipe navigation fallback for mobile background (ignores card touches to avoid conflicts)
   useEffect(() => {
     if (!isLoaded) return;
 
+    let touchStartX = 0;
     let touchStartY = 0;
-    let lastScrollTime = 0;
-    const cooldownMs = 800;
-    const minSwipeDistance = 50; // Minimum drag distance to trigger a switch
+    const minSwipeDistance = 50;
 
     const handleTouchStart = (e: TouchEvent) => {
-      touchStartY = e.touches[0].clientY;
+      touchStartX = e.changedTouches[0].clientX;
+      touchStartY = e.changedTouches[0].clientY;
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      const container = containerRef.current;
-      if (!container) return;
+    const handleTouchEnd = (e: TouchEvent) => {
+      // If the touch started/ended inside the dossier card, let Framer Motion drag handle it
+      const target = e.target as HTMLElement;
+      if (target && target.closest(".glass-card")) {
+        return;
+      }
 
-      const now = Date.now();
-      if (now - lastScrollTime < cooldownMs) return;
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchStartX - touchEndX; // Positive if swiped LEFT (scrolling RIGHT)
+      const diffY = touchStartY - touchEndY;
 
-      const touchEndY = e.touches[0].clientY;
-      const diffY = touchStartY - touchEndY; // Positive if swiped UP (scrolling DOWN)
-
-      if (Math.abs(diffY) > minSwipeDistance) {
-        // Check if content overflows
-        const isScrollable = container.scrollHeight > container.clientHeight;
-
-        if (isScrollable) {
-          if (diffY > 0) {
-            // Swipe up (scroll down) - check if at bottom
-            const isAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
-            if (!isAtBottom) return;
-          } else {
-            // Swipe down (scroll up) - check if at top
-            const isAtTop = container.scrollTop <= 5;
-            if (!isAtTop) return;
-          }
-        }
-
-        lastScrollTime = now;
-        playSelect();
-        if (diffY > 0) {
-          // Swipe up (scrolling down) -> Next
-          setActiveIndex((prev) => (prev + 1) % membersData.length);
+      // Only handle horizontal swipes and ignore if it's primarily a vertical scroll
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+        if (diffX > 0) {
+          handleNext();
         } else {
-          // Swipe down (scrolling up) -> Prev
-          setActiveIndex((prev) => (prev - 1 + membersData.length) % membersData.length);
+          handlePrev();
         }
       }
     };
 
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
-    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
     
     return () => {
       window.removeEventListener("touchstart", handleTouchStart);
-      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [isLoaded]);
+  }, [isLoaded, handleNext, handlePrev]);
 
   const activeMember = membersData[activeIndex];
 
@@ -158,8 +152,11 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex-1 flex flex-col h-screen overflow-hidden relative z-10"
+          className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative z-10"
         >
+          {/* Cinematic Background Layer */}
+          <CinematicBackground />
+
           {/* Subtle grid pattern & glow backgrounds */}
           <div className="absolute inset-0 grid-dot-bg pointer-events-none z-0" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-portal-teal/5 blur-[120px] rounded-full pointer-events-none z-0 animate-pulse" />
@@ -170,10 +167,16 @@ export default function Home() {
           {/* Main Content Area: Centered Active Dossier */}
           <div
             ref={containerRef}
-            className="flex-1 flex items-center justify-center p-4 md:p-6 z-10 overflow-y-auto"
+            className="flex-1 flex items-start md:items-center justify-center px-4 py-6 md:p-6 z-10 overflow-y-auto"
           >
-            <AnimatePresence mode="wait">
-              <ActiveDossier key={activeIndex} member={activeMember} />
+            <AnimatePresence mode="wait" custom={direction}>
+              <ActiveDossier
+                key={activeIndex}
+                member={activeMember}
+                direction={direction}
+                onSwipeLeft={handleNext}
+                onSwipeRight={handlePrev}
+              />
             </AnimatePresence>
           </div>
 
@@ -182,16 +185,24 @@ export default function Home() {
             {/* Horizontal Timeline Selector */}
             <PartySelector
               activeIndex={activeIndex}
-              onSelect={(idx) => setActiveIndex(idx)}
+              onSelect={(idx) => {
+                if (idx !== activeIndex) {
+                  setDirection(idx > activeIndex ? 1 : -1);
+                  setActiveIndex(idx);
+                }
+              }}
             />
 
             {/* Keyboard & Scroll Interaction Legend */}
             <div className="font-mono text-[9px] text-text-muted tracking-widest uppercase flex items-center space-x-2">
-              <span>[←/→] Navigate</span>
-              <span className="opacity-30">•</span>
-              <span>[SPACE] Cycle</span>
-              <span className="opacity-30">•</span>
-              <span>[SCROLL] Switch</span>
+              <span className="hidden md:inline">[←/→] Navigate</span>
+              <span className="hidden md:inline opacity-30">•</span>
+              <span className="hidden md:inline">[SPACE] Cycle</span>
+              <span className="hidden md:inline opacity-30">•</span>
+              <span className="hidden md:inline">[SCROLL] Switch</span>
+              <span className="inline md:hidden">[SWIPE L/R] NAVIGATE</span>
+              <span className="inline md:hidden opacity-30">•</span>
+              <span className="inline md:hidden">[TAP TABS] SELECT</span>
             </div>
           </div>
         </motion.div>

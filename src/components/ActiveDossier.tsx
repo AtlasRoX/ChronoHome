@@ -9,14 +9,33 @@ import { useState } from "react";
 
 interface ActiveDossierProps {
   member: TeamMember;
+  direction?: number;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
-export default function ActiveDossier({ member }: ActiveDossierProps) {
+const dossierVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : direction < 0 ? -80 : 0,
+    y: direction === 0 ? 15 : 0,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    y: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -80 : direction < 0 ? 80 : 0,
+    y: direction === 0 ? -15 : 0,
+    opacity: 0,
+  }),
+};
+
+export default function ActiveDossier({ member, direction = 0, onSwipeLeft, onSwipeRight }: ActiveDossierProps) {
   const [activeSlotHover, setActiveSlotHover] = useState<string>("");
 
-  const renderLargeAvatar = (grid: number[][], color: "teal" | "pink" | "amber" | "muted" | "emerald", size = 96) => {
-    const pixelSize = size / 8;
-    
+  const renderLargeAvatar = (grid: number[][], color: "teal" | "pink" | "amber" | "muted" | "emerald") => {
     const getFillColor = (pixelVal: number) => {
       if (pixelVal === 0) return "transparent";
       switch (color) {
@@ -31,15 +50,19 @@ export default function ActiveDossier({ member }: ActiveDossierProps) {
     };
 
     return (
-      <svg width={size} height={size} className="pixelated" style={{ imageRendering: "pixelated" }}>
+      <svg 
+        viewBox="0 0 8 8" 
+        className="w-full h-full pixelated" 
+        style={{ imageRendering: "pixelated" }}
+      >
         {grid.map((row, rIdx) =>
           row.map((val, cIdx) => (
             <rect
               key={`large-${rIdx}-${cIdx}`}
-              x={cIdx * pixelSize}
-              y={rIdx * pixelSize}
-              width={pixelSize}
-              height={pixelSize}
+              x={cIdx}
+              y={rIdx}
+              width={1}
+              height={1}
               fill={getFillColor(val)}
               shapeRendering="crispEdges"
             />
@@ -96,11 +119,26 @@ export default function ActiveDossier({ member }: ActiveDossierProps) {
   return (
     <motion.div
       key={member.name}
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -15 }}
+      custom={direction}
+      variants={dossierVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className={`glass-card ${getGlowClass(member.color)} w-full max-w-2xl mx-auto p-6 md:p-8 rounded-2xl relative overflow-hidden`}
+      drag="x"
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.6}
+      onDragEnd={(event, info) => {
+        const swipeThreshold = 80;
+        const swipeVelocity = 400;
+        if (info.offset.x < -swipeThreshold || info.velocity.x < -swipeVelocity) {
+          if (onSwipeLeft) onSwipeLeft();
+        } else if (info.offset.x > swipeThreshold || info.velocity.x > swipeVelocity) {
+          if (onSwipeRight) onSwipeRight();
+        }
+      }}
+      className={`glass-card ${getGlowClass(member.color)} w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8 rounded-2xl relative overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y`}
     >
       {/* Decorative fine-detail line glow at the top */}
       <div 
@@ -110,11 +148,11 @@ export default function ActiveDossier({ member }: ActiveDossierProps) {
         }}
       />
 
-      <div className="flex flex-col md:flex-row md:space-x-8 space-y-6 md:space-y-0">
+      <div className="flex flex-col md:flex-row md:space-x-8 space-y-4 md:space-y-0">
         
         {/* Avatar Section */}
-        <div className="flex flex-col items-center justify-center space-y-4">
-          <div className="relative flex items-center justify-center w-28 h-28 float-animation">
+        <div className="flex flex-col items-center justify-center space-y-3">
+          <div className="relative flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 float-animation">
             
             {/* Ambient Background Gradient Orb behind avatar */}
             <div 
@@ -130,8 +168,8 @@ export default function ActiveDossier({ member }: ActiveDossierProps) {
             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-white/20 rounded-br-lg" />
 
             {/* Render Custom Pixel Avatar */}
-            <div className="relative z-10 scale-95 md:scale-100">
-              {renderLargeAvatar(member.avatarGrid, member.color, 96)}
+            <div className="relative z-10 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 scale-95 md:scale-100">
+              {renderLargeAvatar(member.avatarGrid, member.color)}
             </div>
           </div>
           
@@ -181,7 +219,7 @@ export default function ActiveDossier({ member }: ActiveDossierProps) {
 
           {/* Links Slot */}
           <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
               {/* GitHub Link slot */}
               <a
                 href={member.github}
