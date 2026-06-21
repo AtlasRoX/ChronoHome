@@ -73,8 +73,8 @@ export default function LoadingScreen({ onFinished }: LoadingScreenProps) {
                 alt="CHRONOSTRIDER Logo"
                 width={288}
                 height={84}
-                className="w-72 h-[84px] object-contain relative z-10 filter drop-shadow-[0_0_25px_rgba(0,240,255,0.45)]"
-                style={{ width: "auto", height: "auto" }}
+                className="h-[84px] w-auto object-contain relative z-10 filter drop-shadow-[0_0_25px_rgba(0,240,255,0.45)]"
+                style={{ width: "auto" }}
                 priority
               />
             </motion.div>

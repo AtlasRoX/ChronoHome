@@ -48,8 +48,8 @@ export default function ConsoleHeader() {
           alt="CHRONOSTRIDER Logo"
           width={96}
           height={28}
-          className="w-24 h-7 object-contain filter drop-shadow-[0_0_10px_rgba(0,240,255,0.4)] transition-transform duration-300 hover:scale-105 cursor-pointer"
-          style={{ width: "auto", height: "auto" }}
+          className="h-7 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(0,240,255,0.4)] transition-transform duration-300 hover:scale-105 cursor-pointer"
+          style={{ width: "auto" }}
           priority
         />
       </div>
